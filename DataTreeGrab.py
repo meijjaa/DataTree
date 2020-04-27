@@ -34,27 +34,27 @@ For the newest version and documentation see:
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.'''
 
-from __future__ import unicode_literals
+
 import re, sys, traceback, types, pickle
 import time, datetime, pytz
 from threading import RLock
-from Queue import Queue
+from queue import Queue
 
 try:
-    from html.parser import HTMLParser, HTMLParseError
+    from html.parser import HTMLParser
 except ImportError:
-    from HTMLParser import HTMLParser, HTMLParseError
+    from html.parser import HTMLParser, HTMLParseError
 
 try:
     from html.entities import name2codepoint
 except ImportError:
-    from htmlentitydefs import name2codepoint
+    from html.entities import name2codepoint
 
-dt_name = u'DataTreeGrab'
+dt_name = 'DataTreeGrab'
 dt_major = 1
 dt_minor = 4
 dt_patch = 0
-dt_patchdate = u'20170710'
+dt_patchdate = '20170710'
 dt_alfa = False
 dt_beta = False
 _warnings = None
@@ -78,7 +78,7 @@ def is_data_value(searchpath, searchtree, dtype = None, empty_is_false = False):
     If dtype is None check for any value
     you can also supply a tuple  to dtype
     """
-    if isinstance(searchpath, (str, unicode, int)):
+    if isinstance(searchpath, (str, int)):
         searchpath = [searchpath]
 
     if not isinstance(searchpath, (list, tuple)):
@@ -86,7 +86,7 @@ def is_data_value(searchpath, searchtree, dtype = None, empty_is_false = False):
 
     for d in searchpath:
         if isinstance(searchtree, dict):
-            if not d in searchtree.keys():
+            if not d in list(searchtree.keys()):
                 return False
 
         elif isinstance(searchtree, (list, tuple)):
@@ -113,11 +113,11 @@ def is_data_value(searchpath, searchtree, dtype = None, empty_is_false = False):
     if float in dtype and not int in dtype:
         dtype.append(int)
 
-    if str in dtype or unicode in dtype or 'string' in dtype:
-        for dtp in (str, unicode, 'string'):
+    if str in dtype or str in dtype or 'string' in dtype:
+        for dtp in (str, str, 'string'):
             while dtp in dtype:
                 dtype.remove(dtp)
-        dtype.extend([str, unicode])
+        dtype.extend([str, str])
 
     if list in dtype or tuple in dtype or 'list' in dtype:
         for dtp in (list, tuple, 'list'):
@@ -140,7 +140,7 @@ def data_value(searchpath, searchtree, dtype = None, default = None):
     a string, list or dict, an empty one
     """
     if is_data_value(searchpath, searchtree, dtype):
-        if isinstance(searchpath, (str, unicode, int)):
+        if isinstance(searchpath, (str, int)):
             searchpath = [searchpath]
 
         for d in searchpath:
@@ -153,7 +153,7 @@ def data_value(searchpath, searchtree, dtype = None, default = None):
         if default != None:
             return default
 
-        elif dtype in (str, unicode, 'string'):
+        elif dtype in (str, str, 'string'):
             return ""
 
         elif dtype == dict:
@@ -362,7 +362,7 @@ class _Warnings():
         with self.warn_lock:
             assert action in ("error", "ignore", "always", "default", "module",
                               "once"), "invalid action: %r" % (action,)
-            assert isinstance(category, (type, types.ClassType)), \
+            assert isinstance(category, type), \
                    "category must be a class"
             assert issubclass(category, Warning), "category must be a Warning subclass"
             assert isinstance(lineno, int) and lineno >= 0, \
@@ -379,11 +379,11 @@ class _Warnings():
         with self.warn_lock:
             assert action in ("error", "ignore", "always", "default", "module",
                               "once"), "invalid action: %r" % (action,)
-            assert isinstance(message, basestring), "message must be a string"
-            assert isinstance(category, (type, types.ClassType)), \
+            assert isinstance(message, str), "message must be a string"
+            assert isinstance(category, type), \
                    "category must be a class"
             assert issubclass(category, Warning), "category must be a Warning subclass"
-            assert isinstance(module, basestring), "module must be a string"
+            assert isinstance(module, str), "module must be a string"
             assert isinstance(lineno, int) and lineno >= 0, \
                    "lineno must be an int >= 0"
             item = (action, re.compile(message, re.I), category,
@@ -453,7 +453,7 @@ class dtErrorConstants():
         dtInvalidLinkDef: 'Errors in a Link_def were encountered'}
 
     def errortext(self, ecode):
-        if ecode in self.dtErrorTexts.keys():
+        if ecode in list(self.dtErrorTexts.keys()):
             return self.dtErrorTexts[ecode]
 
         return 'Unknown Error'
@@ -645,16 +645,16 @@ class DataTreeConstants():
         linkhasMin: 7}
 
     def const_text(self, ttype, tvalue):
-        if ttype == 'node_name' and tvalue in self.node_name.keys():
+        if ttype == 'node_name' and tvalue in list(self.node_name.keys()):
             return self.node_name[tvalue]
 
-        elif ttype == 'type_name' and tvalue in self.type_name.keys():
+        elif ttype == 'type_name' and tvalue in list(self.type_name.keys()):
             return self.type_name[tvalue]
 
-        elif ttype == 'calc_name' and tvalue in self.calc_name.keys():
+        elif ttype == 'calc_name' and tvalue in list(self.calc_name.keys()):
             return self.calc_name[tvalue]
 
-        elif ttype == 'case_name' and tvalue in self.case_name.keys():
+        elif ttype == 'case_name' and tvalue in list(self.case_name.keys()):
             return self.case_name[tvalue]
 
         return ''
@@ -732,7 +732,7 @@ class DataDef_Convert():
         # return a list of lists (name, typeint, (value/link))
         def convert_attr_dict(ldict):
             llist = []
-            for k, v in ldict.items():
+            for k, v in list(ldict.items()):
                 if is_data_value(["not"], v):
                     dta = self.dtc.attrNot
                     vl = convert_value_list(v["not"])
@@ -764,7 +764,7 @@ class DataDef_Convert():
             memberoff = ""
             ndefault = None
             if isinstance(node_def,dict):
-                if "value" in node_def.keys():
+                if "value" in list(node_def.keys()):
                     sel_node = [self.dtc.getLitteral, node_def["value"]]
 
                 elif is_data_value("attr", node_def, str) and self.ddtype in ("html", ""):
@@ -815,13 +815,13 @@ class DataDef_Convert():
 
                 # Process any calc statements
                 calc_type = self.dtc.calcNone
-                if "lower" in node_def.keys():
+                if "lower" in list(node_def.keys()):
                     calc_list.append((self.dtc.calcLettering, self.dtc.calcLower))
 
-                elif "upper" in node_def.keys():
+                elif "upper" in list(node_def.keys()):
                     calc_list.append((self.dtc.calcLettering, self.dtc.calcUpper))
 
-                elif "capitalize" in node_def.keys():
+                elif "capitalize" in list(node_def.keys()):
                     calc_list.append((self.dtc.calcLettering, self.dtc.calcCapitalize))
 
                 if is_data_value('ascii-replace', node_def, list) and len(node_def['ascii-replace']) > 0:
@@ -850,7 +850,7 @@ class DataDef_Convert():
                         slist = node_def['split']
 
                     for s in slist:
-                        if isinstance(s[0], (str,unicode)) and len(s) >1:
+                        if isinstance(s[0], str) and len(s) >1:
                             sp = [s[0]]
                             if s[1] == 'list-all':
                                 sp.append(s[1])
@@ -867,7 +867,7 @@ class DataDef_Convert():
                         calc_list.append((self.dtc.calcSplit, tuple(sl)))
 
                 if is_data_value('multiplier', node_def, int) and \
-                    not data_value('type', node_def, unicode) in ('timestamp', 'datestamp'):
+                    not data_value('type', node_def, str) in ('timestamp', 'datestamp'):
                         calc_list.append((self.dtc.calcMultiply, node_def["multiplier"]))
 
                 if is_data_value('divider', node_def, int) and node_def['divider'] != 0:
@@ -876,8 +876,8 @@ class DataDef_Convert():
                 if is_data_value('replace', node_def, dict):
                     rl1 = []
                     rl2 = []
-                    for k, v in node_def["replace"].items():
-                        if isinstance(k, (str, unicode)):
+                    for k, v in list(node_def["replace"].items()):
+                        if isinstance(k, str):
                             rl1.append(k.lower())
                             rl2.append(v)
 
@@ -887,12 +887,12 @@ class DataDef_Convert():
                 if len(calc_list) > 0:
                     node_type += self.dtc.hasCalc
 
-                if "default" in node_def.keys():
+                if "default" in list(node_def.keys()):
                     node_type += self.dtc.hasDefault
                     ndefault = node_def["default"]
 
                 # Process any type statement
-                if is_data_value('type', node_def, unicode):
+                if is_data_value('type', node_def, str):
                     if node_def['type'] == 'timestamp':
                         if is_data_value('multiplier', node_def, int) and node_def['multiplier'] != 0:
                             type_def = (self.dtc.typeTimeStamp, node_def['multiplier'])
@@ -969,12 +969,12 @@ class DataDef_Convert():
                     if len(type_def) > 0:
                         node_type += self.dtc.hasType
 
-                if not (path_type & self.dtc.pathMulti) or "first" in node_def.keys() or "last" in node_def.keys():
+                if not (path_type & self.dtc.pathMulti) or "first" in list(node_def.keys()) or "last" in list(node_def.keys()):
                     node_type += self.dtc.getOnlyOne
-                    if "last" in node_def.keys():
+                    if "last" in list(node_def.keys()):
                         node_type += self.dtc.getLast
 
-                if is_data_value('member-off', node_def, unicode):
+                if is_data_value('member-off', node_def, str):
                     memberoff = node_def["member-off"]
                     node_type += self.dtc.isMemberOff
 
@@ -1014,21 +1014,21 @@ class DataDef_Convert():
             for n in range(len(pd)):
                 inode = pd[n]
                 # Add any name definition as independent node
-                if (path_type & self.dtc.pathWithNames) and "name" in inode.keys():
+                if (path_type & self.dtc.pathWithNames) and "name" in list(inode.keys()):
                     dpath.append(convert_data_extraction(inode["name"], self.dtc.storeName))
 
                 # Look for node selection statements
                 sel_node = [self.dtc.isNodeSel, self.dtc.selNone]
-                if not (path_type & self.dtc.pathMulti) or "first" in inode.keys() or "last" in inode.keys():
+                if not (path_type & self.dtc.pathMulti) or "first" in list(inode.keys()) or "last" in list(inode.keys()):
                     sel_node[0] += self.dtc.getOnlyOne
-                    if "last" in inode.keys():
+                    if "last" in list(inode.keys()):
                         sel_node[0] += self.dtc.getLast
 
                 for i in range(1, self.dtc.selPosMax):
                     sel_node.append(None)
 
                 # Check for a main statement
-                if "path" in inode.keys():
+                if "path" in list(inode.keys()):
                     for ttext, dtsel in (
                             ("all", self.dtc.selPathAll),
                             ("parent", self.dtc.selPathParent),
@@ -1052,7 +1052,7 @@ class DataDef_Convert():
                             ("tag", self.dtc.selTag, "html", True),
                             ("keys", self.dtc.selKeys, "json", False),
                             ("tags", self.dtc.selTags, "html", False)):
-                        if ttext in inode.keys() and self.ddtype in (tree_type, ""):
+                        if ttext in list(inode.keys()) and self.ddtype in (tree_type, ""):
                             self.ddtype = tree_type
                             sel_node[1] = dtsel
                             if singleval:
@@ -1064,7 +1064,7 @@ class DataDef_Convert():
                             break
 
                 # Check when allowed for an Index statement
-                if sel_node[1] in (self.dtc.selNone, self.dtc.selTag, self.dtc.selTags, self.dtc.selKeys) and "index" in inode.keys():
+                if sel_node[1] in (self.dtc.selNone, self.dtc.selTag, self.dtc.selTags, self.dtc.selKeys) and "index" in list(inode.keys()):
                     sel_node[1] += self.dtc.selIndex
                     sel_node[self.dtc.selPos[self.dtc.selIndex]] = convert_value_list(inode["index"], True)
 
@@ -1073,7 +1073,7 @@ class DataDef_Convert():
                     for ttext, dtsel in (
                             ("text", self.dtc.selText),
                             ("tail", self.dtc.selTail)):
-                        if ttext in inode.keys() and self.ddtype in ("html", ""):
+                        if ttext in list(inode.keys()) and self.ddtype in ("html", ""):
                             self.ddtype = "html"
                             sel_node[1] += dtsel
                             sel_node[self.dtc.selPos[dtsel]] = convert_value_list(inode[ttext])
@@ -1083,7 +1083,7 @@ class DataDef_Convert():
                             ("attrs", self.dtc.selAttrs, "html"),
                             ("notchildkeys", self.dtc.selNotChildKeys, "json"),
                             ("notattrs", self.dtc.selNotAttrs, "html")):
-                        if ttext in inode.keys() and self.ddtype in (tree_type, ""):
+                        if ttext in list(inode.keys()) and self.ddtype in (tree_type, ""):
                             if isinstance(inode[ttext], dict):
                                 sel_node[self.dtc.selPos[dtsel]] = (convert_attr_dict(inode[ttext]), )
 
@@ -1111,12 +1111,12 @@ class DataDef_Convert():
                     dpath.append(tuple(sel_node))
 
                 # Add any node link statement as independent node
-                if "node" in inode.keys():
+                if "node" in list(inode.keys()):
                     self.link_list["nodes"].append(inode["node"])
                     dpath.append((self.dtc.isNodeLink, inode["node"]))
 
                 # Add any link statement as independent node
-                if "link" in inode.keys():
+                if "link" in list(inode.keys()):
                     self.link_list["values"].append(inode["link"])
                     if (path_type & self.dtc.pathWithValue) and n ==len(pd) -1:
                         dpath.append(convert_data_extraction(inode, self.dtc.storeLinkValue + self.dtc.storePathValue))
@@ -1258,7 +1258,7 @@ class DataDef_Convert():
     def convert_data_def(self, data_def = None, ptype = "", include_url = True, include_links = True, file_name = None):
         def _get_url_part(u_part):
             urlid = None
-            if isinstance(u_part, (str, unicode)):
+            if isinstance(u_part, str):
                 return u_part
 
             # get a variable
@@ -1297,7 +1297,7 @@ class DataDef_Convert():
                 self.ddtype = 'html'
 
             self.cdata_def = {}
-            self.cdata_def["datetimestring"] = self.data_value("datetimestring", str, default = u"%Y-%m-%d %H:%M:%S")
+            self.cdata_def["datetimestring"] = self.data_value("datetimestring", str, default = "%Y-%m-%d %H:%M:%S")
             self.cdata_def["date-sequence"] = self.data_value("date-sequence", list, default = ["y","m","d"])
             self.cdata_def["date-splitter"] = self.data_value("date-splitter", str, default = '-')
             self.cdata_def["month-names"] = self.data_value("month-names", list)
@@ -1327,7 +1327,7 @@ class DataDef_Convert():
             self.cdata_def["enclose-with-html-tag"] = self.data_value("enclose-with-html-tag", bool, default = False)
             self.cdata_def["autoclose-tags"] = self.data_value("autoclose-tags", list)
             if include_url:
-                if self.is_data_value("url", (str, unicode)):
+                if self.is_data_value("url", (str, str)):
                     dd_url = [self.data_def["url"]]
 
                 else:
@@ -1345,7 +1345,7 @@ class DataDef_Convert():
                 self.cdata_def["encoding"] = self.data_value("encoding", str)
                 self.cdata_def["url-header"] = {}
                 if self.is_data_value("url-header", dict):
-                    for k, u_part in self.data_value(["url-header"], dict).items():
+                    for k, u_part in list(self.data_value(["url-header"], dict).items()):
                         uval = _get_url_part(u_part)
                         if uval == None:
                             self.warn('Invalid url-header definition: %s' % (u_part, ), dtConversionWarning, 2)
@@ -1357,7 +1357,7 @@ class DataDef_Convert():
                     self.cdata_def["url-header"] = {"Accept": self.data_value(["accept-header"], str)}
 
                 self.cdata_def["url-data"] = {}
-                for k, u_part in self.data_value(["url-data"], dict).items():
+                for k, u_part in list(self.data_value(["url-data"], dict).items()):
                     uval = _get_url_part(u_part)
                     if uval == None:
                         self.warn('Invalid url-data definition: %s' % (u_part, ), dtConversionWarning, 2)
@@ -1372,7 +1372,7 @@ class DataDef_Convert():
                 self.cdata_def["url-date-type"] = self.data_value("url-date-type", int, default = 0)
                 self.cdata_def["url-weekdays"] = self.data_value("url-weekdays", list)
                 self.cdata_def["url-relative-weekdays"] = {}
-                for dname, dno in self.data_value( "url-relative-weekdays", dict).items():
+                for dname, dno in list(self.data_value( "url-relative-weekdays", dict).items()):
                     try:
                          self.cdata_def["url-relative-weekdays"][int(dno)] = dname
 
@@ -1392,7 +1392,7 @@ class DataDef_Convert():
             self.cdata_def["data"] = {}
             self.cdata_def["data"]["sort"] = []
             for s_rule in self.data_value(['data',"sort"],list):
-                if not "path" in s_rule.keys() or not "childkeys" in s_rule.keys():
+                if not "path" in list(s_rule.keys()) or not "childkeys" in list(s_rule.keys()):
                     continue
 
                 if not isinstance(s_rule["path"],list):
@@ -1441,7 +1441,7 @@ class DataDef_Convert():
             if include_links:
                 self.cdata_def["empty-values"] = self.data_value('empty-values', list, default = [None, ''])
                 self.cdata_def["values"] = {}
-                for k, v in self.data_value("values", dict).items():
+                for k, v in list(self.data_value("values", dict).items()):
                     self.cdata_def["values"][k] = self.convert_link_def(v, k, value_count,False)
 
             if file_name != None:
@@ -1458,7 +1458,7 @@ class DataDef_Convert():
                 output.write(data.encode('utf-8', 'replace'))
 
             else:
-                output.write(u'%s\n' % data)
+                output.write('%s\n' % data)
 
     def store_cdata_def(self, filename, data = None):
         with self.tree_lock:
@@ -1466,7 +1466,7 @@ class DataDef_Convert():
                 data = self.cdata_def
 
             try:
-                pickle.dump(data, open(filename, 'w'), 2)
+                pickle.dump(data, open(filename, 'wb'), 2)
 
             except:
                 self.warn('Failed to store the converted file as: "%s"' % ( filename, ), dtConversionWarning, 1)
@@ -1542,7 +1542,7 @@ class DATAnode():
 
             if nfound:
                 if self.dtree.show_result:
-                    self.dtree.print_text(u'    found node %s;\n%s' % \
+                    self.dtree.print_text('    found node %s;\n%s' % \
                         (node.print_node(), node.print_node_def(d_def[0])))
 
             return nfound
@@ -1584,12 +1584,12 @@ class DATAnode():
             elif ndef_type == self.dtc.isValue:
                 val = self.find_value(d_def[0])
                 if self.dtree.show_result:
-                    if isinstance(val, (str,unicode)):
-                        self.dtree.print_text(u'    found nodevalue (="%s"): %s\n%s' % \
+                    if isinstance(val, str):
+                        self.dtree.print_text('    found nodevalue (="%s"): %s\n%s' % \
                             (val, self.print_node(), self.print_node_def(d_def[0])))
 
                     else:
-                        self.dtree.print_text(u'    found nodevalue (=%s): %s\n%s' % \
+                        self.dtree.print_text('    found nodevalue (=%s): %s\n%s' % \
                             (val, self.print_node(), self.print_node_def(d_def[0])))
 
                 if (d_def[0][0] & self.dtc.storeLinkValue):
@@ -1621,7 +1621,7 @@ class DATAnode():
             self.end_links["values"] = links["values"].copy()
             self.end_links["nodes"] = links["nodes"].copy()
             if self.dtree.show_result:
-                self.dtree.print_text(u'  adding node (= %s) %s' % (childs[0][1], self.print_node()))
+                self.dtree.print_text('  adding node (= %s) %s' % (childs[0][1], self.print_node()))
 
         if nm == None:
             return childs
@@ -1687,14 +1687,14 @@ class DATAnode():
 
         elif ltype == 'lower':
             try:
-                value = unicode(value).lower()
+                value = str(value).lower()
 
             except:
                 return wrong_value(value, "string")
 
         elif ltype == 'str':
             try:
-                value = unicode(value)
+                value = str(value)
 
             except:
                 return wrong_value(value, "string")
@@ -1718,12 +1718,12 @@ class DATAnode():
         nv = self.find_value(node_def)
         if nv != None:
             if self.dtree.show_result:
-                if isinstance(nv, (str,unicode)):
-                    self.dtree.print_text(u'  storing name = "%s" from node: %s\n      %s' % \
+                if isinstance(nv, str):
+                    self.dtree.print_text('  storing name = "%s" from node: %s\n      %s' % \
                         (nv, self.print_node(), self.print_node_def(node_def)))
 
                 else:
-                    self.dtree.print_text(u'  storing name = %s from node: %s\n      %s' % \
+                    self.dtree.print_text('  storing name = %s from node: %s\n      %s' % \
                         (nv, self.print_node(), self.print_node_def(node_def)))
             return nv
 
@@ -1743,12 +1743,12 @@ class DATAnode():
 
         if node_def[0] & self.dtc.isMemberOff:
             imo = node_def[self.dtc.getPos[self.dtc.isMemberOff]]
-            if not imo in self.dtree.value_filters.keys() or not sv in self.dtree.value_filters[imo]:
+            if not imo in list(self.dtree.value_filters.keys()) or not sv in self.dtree.value_filters[imo]:
                 sv = NULLnode()
 
         # Make sure a string is unicode and free of HTML entities
-        if isinstance(sv, (str, unicode)):
-            sv = re.sub('\n','', re.sub('\r','', self.dtree.un_escape(unicode(sv)))).strip()
+        if isinstance(sv, str):
+            sv = re.sub('\n','', re.sub('\r','', self.dtree.un_escape(str(sv)))).strip()
 
         return sv
 
@@ -1757,7 +1757,7 @@ class DATAnode():
         return self.value
 
     def get_leveltabs(self, spaces=4, pluslevel=0):
-        return u''.ljust(spaces * (self.level + pluslevel))
+        return ''.ljust(spaces * (self.level + pluslevel))
 
     def print_sel_def(self, sel_def, spc):
         # Detailed in child class to print its specific keys in human form
@@ -1765,8 +1765,8 @@ class DATAnode():
 
     def print_value_link(self, vldef, is_index = False):
         if vldef[0] == self.dtc.valValue:
-            if isinstance(vldef[1], (str, unicode)):
-                return u'"%s"' % vldef[1]
+            if isinstance(vldef[1], str):
+                return '"%s"' % vldef[1]
             return vldef[1]
 
         if vldef[0] & self.dtc.valLinkPlus:
@@ -1905,15 +1905,15 @@ class DATAnode():
                 return 'returning the Parent Node'
 
             elif node_def[0] & self.dtc.getLast:
-                return u'returning the last found Child Node%s'% \
+                return 'returning the last found Child Node%s'% \
                         (self.print_sel_def(sel_def, spc), )
 
             elif node_def[0] & self.dtc.getOnlyOne:
-                return u'returning the first found Child Node%s'% \
+                return 'returning the first found Child Node%s'% \
                         (self.print_sel_def(sel_def, spc), )
 
             else:
-                return u'returning all Child Nodes%s'% (self.print_sel_def(sel_def, spc), )
+                return 'returning all Child Nodes%s'% (self.print_sel_def(sel_def, spc), )
 
         spc = self.get_leveltabs(4, 1)
         spc2 = self.get_leveltabs(4, 2)
@@ -1921,46 +1921,46 @@ class DATAnode():
         if self.dtree.is_data_value("dtversion", tuple):
             ndef_type = (node_def[0] & self.dtc.isGroup)
             if ndef_type == self.dtc.isNodeSel:
-                rstr = u'%s%s %s\n%s' % \
+                rstr = '%s%s %s\n%s' % \
                     (spc, self.dtc.const_text('node_name',ndef_type), print_node_sel_def(node_def, spc), spc)
 
             elif ndef_type == self.dtc.isNodeLink:
-                rstr = u'%sStoring the Node under Node-Link ID: %s' % (spc, node_def[1])
+                rstr = '%sStoring the Node under Node-Link ID: %s' % (spc, node_def[1])
 
             elif ndef_type in (self.dtc.storeName, self.dtc.isValue):
-                rstr = u'%s%s: returning %s' % (spc, self.dtc.const_text('node_name', ndef_type), self.print_val_def(node_def[1]))
+                rstr = '%s%s: returning %s' % (spc, self.dtc.const_text('node_name', ndef_type), self.print_val_def(node_def[1]))
                 if node_def[0] & self.dtc.hasCalc:
-                    rstr = u'%s\n%swith calcfunctions: (%s)' % \
+                    rstr = '%s\n%swith calcfunctions: (%s)' % \
                         (rstr, spc2, print_calc_def(node_def[self.dtc.getPos[self.dtc.hasCalc]], spc3))
 
                 if node_def[0] & self.dtc.hasDefault:
-                    rstr = u'%s\n%swith a default value of: (%s)' % \
+                    rstr = '%s\n%swith a default value of: (%s)' % \
                         (rstr, spc2, node_def[self.dtc.getPos[self.dtc.hasDefault]])
 
                 if node_def[0] & self.dtc.hasType:
-                    rstr = u'%s\n%swith a type definition as: %s' % \
+                    rstr = '%s\n%swith a type definition as: %s' % \
                         (rstr, spc2, print_type_def(node_def[self.dtc.getPos[self.dtc.hasType]]))
 
                 if node_def[0] & self.dtc.isMemberOff:
-                    rstr = u'%s\n%swhich must be present in the %s value_filter list' % \
+                    rstr = '%s\n%swhich must be present in the %s value_filter list' % \
                         (rstr, spc2, node_def[self.dtc.getPos[self.dtc.isMemberOff]])
 
                 if node_def[0] & self.dtc.storeLinkValue:
-                    rstr = u'%s\n%sStoring it under Value-Link ID: %s' % \
+                    rstr = '%s\n%sStoring it under Value-Link ID: %s' % \
                         (rstr, spc, node_def[self.dtc.getPos[self.dtc.storeLinkValue]])
 
                 if node_def[0] & self.dtc.storePathValue:
-                    rstr = u'%s\n%sReturning it as path_def value' % (rstr, spc)
+                    rstr = '%s\n%sReturning it as path_def value' % (rstr, spc)
 
         else:
-            rstr = u'%snode_def: ' % (spc, )
-            for k, v in node_def.items():
-                rstr = u'%s%s: %s\n%s          ' % (rstr, k, v, spc)
+            rstr = '%snode_def: ' % (spc, )
+            for k, v in list(node_def.items()):
+                rstr = '%s%s: %s\n%s          ' % (rstr, k, v, spc)
 
         return rstr.rstrip('\n').rstrip()
 
     def print_tree(self):
-        sstr =u'%s%s' % (self.get_leveltabs(), self.print_node(True))
+        sstr ='%s%s' % (self.get_leveltabs(), self.print_node(True))
         self.dtree.print_text(sstr)
         for n in self.children:
             n.print_tree()
@@ -1969,14 +1969,14 @@ class DATAnode():
 
 class HTMLnode(DATAnode):
     def __init__(self, dtree, data = None, parent = None):
-        self.tag = u''
-        self.text = u''
-        self.tail = u''
+        self.tag = ''
+        self.text = ''
+        self.tail = ''
         self.attributes = {}
         self.attr_names = []
         DATAnode.__init__(self, dtree, parent)
         with self.node_lock:
-            if isinstance(data, (str, unicode)):
+            if isinstance(data, str):
                 self.tag = data.lower().strip()
 
             elif isinstance(data, list):
@@ -1985,30 +1985,30 @@ class HTMLnode(DATAnode):
 
                 if len(data) > 1 and isinstance(data[1], (list, tuple)):
                     for a in data[1]:
-                        if isinstance(a[1], (str, unicode)):
+                        if isinstance(a[1], str):
                             self.attributes[a[0].lower().strip()] = a[1].strip()
 
                         else:
                             self.attributes[a[0].lower().strip()] = a[1]
 
-                    if 'class' in self.attributes.keys():
+                    if 'class' in list(self.attributes.keys()):
                         self.attr_names.append('class')
 
-                    if 'id' in self.attributes.keys():
+                    if 'id' in list(self.attributes.keys()):
                         self.attr_names.append('id')
 
-                    for a in self.attributes.keys():
+                    for a in list(self.attributes.keys()):
                         if a not in self.attr_names:
                             self.attr_names.append(a)
 
     def get_attribute(self, name):
-        if name.lower() in self.attributes.keys():
+        if name.lower() in list(self.attributes.keys()):
             return self.attributes[name.lower()]
 
         return None
 
     def is_attribute(self, name, value = None):
-        if name.lower() in self.attributes.keys():
+        if name.lower() in list(self.attributes.keys()):
             if value == None or value.lower() == self.attributes[name.lower()].lower():
                 return True
 
@@ -2038,7 +2038,7 @@ class HTMLnode(DATAnode):
                 if not isinstance(attributes, dict):
                     return False
 
-                for a, v in attributes.items():
+                for a, v in list(attributes.items()):
                     if not self.is_attribute(a, v):
                         return False
 
@@ -2155,17 +2155,17 @@ class HTMLnode(DATAnode):
 
         elif val_source == self.dtc.getInclusiveText:
             def add_child_text(child, depth, in_ex, tag_list):
-                t = u''
+                t = ''
                 if in_ex == 0 or (in_ex == 1 and child.tag in tag_list) or (in_ex == -1 and child.tag not in tag_list):
                     if child.text != '':
-                        t = u'%s %s' % (t, child.text)
+                        t = '%s %s' % (t, child.text)
 
                     if depth > 1:
                         for c in child.children:
-                            t = u'%s %s' % (t, add_child_text(c, depth - 1, in_ex, tag_list))
+                            t = '%s %s' % (t, add_child_text(c, depth - 1, in_ex, tag_list))
 
                 if child.tail != '':
-                    t = u'%s %s' % (t, child.tail)
+                    t = '%s %s' % (t, child.tail)
 
                 return t.strip()
 
@@ -2174,7 +2174,7 @@ class HTMLnode(DATAnode):
             tag_list = val_def[1][2]
             sv = self.text
             for c in self.children:
-                sv = u'%s %s' % (sv, add_child_text(c, depth, in_ex, tag_list))
+                sv = '%s %s' % (sv, add_child_text(c, depth, in_ex, tag_list))
 
             return sv
 
@@ -2230,82 +2230,82 @@ class HTMLnode(DATAnode):
 
     def print_sel_def(self, sel_def, spc):
         sel_node = (sel_def[1] & self.dtc.selMain)
-        rstr = u''
+        rstr = ''
         if sel_node == self.dtc.selTag:
-            rstr = u'    a tag: %s,\n%s' % \
+            rstr = '    a tag: %s,\n%s' % \
                 (self.print_value_link(sel_def[self.dtc.selPos[self.dtc.selTag]]), spc)
 
         elif sel_node == self.dtc.selTags:
-            rstr = u'    a tag: %s,\n%s' % \
+            rstr = '    a tag: %s,\n%s' % \
                 (self.print_value_link_list(sel_def[self.dtc.selPos[self.dtc.selTags]]), spc)
 
         if sel_def[1] &  self.dtc.selAttrs:
             for cd in sel_def[self.dtc.selPos[self.dtc.selAttrs]]:
                 for ck in cd:
-                    rstr = u'%s    an attribute: "%s",\n%s' % (rstr, ck[0], spc)
+                    rstr = '%s    an attribute: "%s",\n%s' % (rstr, ck[0], spc)
                     if ck[1] == self.dtc.attr:
-                        rstr = u'%s        %s,\n%s' % \
+                        rstr = '%s        %s,\n%s' % \
                             (rstr, self.print_value_link_list(ck[2], add_starter = True), spc)
 
                     else:
-                        rstr = u'%s        but not %s,\n%s' % \
+                        rstr = '%s        but not %s,\n%s' % \
                             (rstr, self.print_value_link_list(ck[2], add_starter = True), spc)
 
         if sel_def[1] &  self.dtc.selNotAttrs:
             for cd in sel_def[self.dtc.selPos[self.dtc.selNotAttrs]]:
                 for ck in cd:
-                    rstr = u'%s    not an attribute: "%s",\n%s' % (rstr, ck[0], spc)
+                    rstr = '%s    not an attribute: "%s",\n%s' % (rstr, ck[0], spc)
                     if ck[1] == self.dtc.attr:
-                        rstr = u'%s        %s,\n%s' % \
+                        rstr = '%s        %s,\n%s' % \
                             (rstr, self.print_value_link_list(ck[2], add_starter = True), spc)
 
                     else:
-                        rstr = u'%s        unless %s,\n%s' % \
+                        rstr = '%s        unless %s,\n%s' % \
                             (rstr, self.print_value_link_list(ck[2], add_starter = True), spc)
 
         if sel_node  in (self.dtc.selNone, self.dtc.selTag, self.dtc.selTags) and sel_def[1] &  self.dtc.selIndex:
-            rstr = u'%s    an index: %s,\n%s' % \
+            rstr = '%s    an index: %s,\n%s' % \
                 (rstr, self.print_value_link_list(sel_def[self.dtc.selPos[self.dtc.selIndex]], True), spc)
 
         if sel_def[1] &  self.dtc.selText:
-            rstr = u'%s    a text: %s,\n%s' % \
+            rstr = '%s    a text: %s,\n%s' % \
                 (rstr, self.print_value_link_list(sel_def[self.dtc.selPos[self.dtc.selText]]), spc)
 
         if sel_def[1] &  self.dtc.selTail:
-            rstr = u'%s    a tailtext: %s,\n%s' % \
+            rstr = '%s    a tailtext: %s,\n%s' % \
                 (rstr, self.print_value_link_list(sel_def[self.dtc.selPos[self.dtc.selTail]]), spc)
 
-        if rstr == u'':
-            return u'.\n%s' % (spc, )
+        if rstr == '':
+            return '.\n%s' % (spc, )
 
         else:
-            return u' with: \n%s%s' % (spc, rstr)
+            return ' with: \n%s%s' % (spc, rstr)
 
     def print_node(self, print_all = False):
-        attributes = u''
+        attributes = ''
         spc = self.get_leveltabs(4, 1)
         if len(self.attributes) > 0:
             for a in self.attr_names:
                 v = self.attributes[a]
-                if isinstance(v, (str,unicode)):
+                if isinstance(v, str):
                     v = re.sub('\r','', v)
                     v = re.sub('\n', ' ', v)
-                attributes = u'%s%s = "%s",\n    %s' % (attributes, a, v, spc)
+                attributes = '%s%s = "%s",\n    %s' % (attributes, a, v, spc)
             attributes = attributes[:-(len(spc)+6)]
 
-        rstr = u'at level %s:\n%s%s(%s)' % (self.level, spc, self.tag, attributes)
-        rstr = u'%s\n    %sindex: %s' % (rstr, spc, self.child_index)
+        rstr = 'at level %s:\n%s%s(%s)' % (self.level, spc, self.tag, attributes)
+        rstr = '%s\n    %sindex: %s' % (rstr, spc, self.child_index)
         if print_all:
             if self.text != '':
-                rstr = u'%s\n    %stext: %s' % (rstr, spc, self.text)
+                rstr = '%s\n    %stext: %s' % (rstr, spc, self.text)
 
             if self.tail != '':
-                rstr = u'%s\n    %stail: %s' % (rstr, spc, self.tail)
+                rstr = '%s\n    %stail: %s' % (rstr, spc, self.tail)
 
         else:
             tx = self.find_node_value()
             if tx != "":
-                rstr = u'%s\n    %s%s' % (rstr, spc, tx)
+                rstr = '%s\n    %s%s' % (rstr, spc, tx)
 
         return rstr
 
@@ -2327,7 +2327,7 @@ class JSONnode(DATAnode):
 
             elif isinstance(data, dict):
                 self.type = "dict"
-                for k, item in data.items():
+                for k, item in list(data.items()):
                     JSONnode(self.dtree, item, self, k)
 
             else:
@@ -2472,62 +2472,62 @@ class JSONnode(DATAnode):
 
     def print_sel_def(self, sel_def, spc):
         sel_node = (sel_def[1] & self.dtc.selMain)
-        rstr = u''
+        rstr = ''
         if sel_node == self.dtc.selKey:
-            rstr = u'    with a key: %s,\n%s' % \
+            rstr = '    with a key: %s,\n%s' % \
                 (self.print_value_link(sel_def[self.dtc.selPos[self.dtc.selKey]]), spc)
 
         elif sel_node == self.dtc.selKeys:
-            rstr = u'    with a key: %s,\n%s' % \
+            rstr = '    with a key: %s,\n%s' % \
                 (self.print_value_link_list(sel_def[self.dtc.selPos[self.dtc.selKeys]]), spc)
 
         if sel_def[1] &  self.dtc.selChildKeys:
             for cd in sel_def[self.dtc.selPos[self.dtc.selChildKeys]]:
                 for ck in cd:
-                    if isinstance(ck[0], (str, unicode)):
-                        rstr = u'%s    a childkey: "%s",\n%s' % (rstr, ck[0], spc)
+                    if isinstance(ck[0], str):
+                        rstr = '%s    a childkey: "%s",\n%s' % (rstr, ck[0], spc)
 
                     else:
-                        rstr = u'%s    a childkey: %s,\n%s' % (rstr, ck[0], spc)
+                        rstr = '%s    a childkey: %s,\n%s' % (rstr, ck[0], spc)
 
                     if ck[1] == self.dtc.attr:
-                        rstr = u'%s        %s,\n%s' % \
+                        rstr = '%s        %s,\n%s' % \
                             (rstr, self.print_value_link_list(ck[2], add_starter = True), spc)
 
                     else:
-                        rstr = u'%s        but not %s,\n%s' % \
+                        rstr = '%s        but not %s,\n%s' % \
                             (rstr, self.print_value_link_list(ck[2], add_starter = True), spc)
 
         if sel_def[1] &  self.dtc.selNotChildKeys:
             for cd in sel_def[self.dtc.selPos[self.dtc.selNotChildKeys]]:
                 for ck in cd:
-                    if isinstance(ck[0], (str, unicode)):
-                        rstr = u'%s    not a childkey: "%s",\n%s' % (rstr, ck[0], spc)
+                    if isinstance(ck[0], str):
+                        rstr = '%s    not a childkey: "%s",\n%s' % (rstr, ck[0], spc)
 
                     else:
-                        rstr = u'%s    not a childkey: %s,\n%s' % (rstr, ck[0], spc)
+                        rstr = '%s    not a childkey: %s,\n%s' % (rstr, ck[0], spc)
 
                     if ck[1] == self.dtc.attr:
-                        rstr = u'%s        %s,\n%s' % \
+                        rstr = '%s        %s,\n%s' % \
                             (rstr, self.print_value_link_list(ck[2], add_starter = True), spc)
 
                     else:
-                        rstr = u'%s        unless %s,\n%s' % \
+                        rstr = '%s        unless %s,\n%s' % \
                             (rstr, self.print_value_link_list(ck[2], add_starter = True), spc)
 
         if sel_node  in (self.dtc.selNone, self.dtc.selKeys) and sel_def[1] &  self.dtc.selIndex:
-            rstr = u'%s    with an index: %s,\n%s' % \
+            rstr = '%s    with an index: %s,\n%s' % \
                 (rstr, self.print_value_link_list(sel_def[self.dtc.selPos[self.dtc.selIndex]], True), spc)
 
-        if rstr == u'':
-            return u'.\n%s' % (spc, )
+        if rstr == '':
+            return '.\n%s' % (spc, )
 
         else:
-            return u' with: \n%s%s' % (spc, rstr)
+            return ' with: \n%s%s' % (spc, rstr)
 
     def print_node(self, print_all = False):
         value = self.find_node_value() if self.type == "value" else '"%s"' % (self.type, )
-        return u'%s = %s' % (self.key, value)
+        return '%s = %s' % (self.key, value)
 
 # end JSONnode
 
@@ -2550,11 +2550,11 @@ class DATAtree():
             self.month_names = []
             self.weekdays = []
             self.relative_weekdays = {}
-            self.datetimestring = u"%Y-%m-%d %H:%M:%S"
-            self.time_splitter = u':'
+            self.datetimestring = "%Y-%m-%d %H:%M:%S"
+            self.time_splitter = ':'
             self.time_type = [24]
             self.date_sequence = ["y","m","d"]
-            self.date_splitter = u'-'
+            self.date_splitter = '-'
             self.utc = pytz.utc
             self.timezone = pytz.utc
             self.value_filters = {}
@@ -2668,7 +2668,7 @@ class DATAtree():
         with self.tree_lock:
             rw = self.data_def["relative-weekdays"]
 
-            for name, index in rw.items():
+            for name, index in list(rw.items()):
                 self.relative_weekdays[name] = datetime.date.fromordinal(self.current_ordinal + index)
 
             current_weekday = self.timezone.normalize(datetime.datetime.now(pytz.utc).astimezone(self.timezone)).weekday()
@@ -2764,7 +2764,7 @@ class DATAtree():
 
                     elif isinstance(node, dict):
                         # There is a named subset of the found nodes
-                        for k, v in node.items():
+                        for k, v in list(node.items()):
                             slist = []
                             for item in v:
                                 if isinstance(item, tuple) and len(item) == 2:
@@ -2809,7 +2809,7 @@ class DATAtree():
                     continue
 
                 if self.show_result:
-                    self.print_text(u'Parsing the key_path starting at %s' % (self.start_node.print_node(), ))
+                    self.print_text('Parsing the key_path starting at %s' % (self.start_node.print_node(), ))
 
                 links = {"values": {},"nodes": {}}
                 self.key_list = self.start_node.get_children(path_def = dset["key-path"], links = links)
@@ -2834,13 +2834,13 @@ class DATAtree():
                     links = k[0].end_links
                     tlist = [k[1]]
                     if self.show_result:
-                        self.print_text(u'parsing key %s' % (tlist, ))
+                        self.print_text('parsing key %s' % (tlist, ))
 
                     i = 0
                     for v in dset["values"][:]:
                         i += 1
                         if self.show_result:
-                            self.print_text(u'  searching for value %s' % (i, ))
+                            self.print_text('  searching for value %s' % (i, ))
                         if not isinstance(v, tuple) or len(v) == 0:
                             tlist.append(None)
                             continue
@@ -2877,16 +2877,16 @@ class DATAtree():
 
         for cd in calc_def:
             try:
-                if isinstance(value, (str, unicode)):
+                if isinstance(value, str):
                     if cd[0] == self.dtc.calcLettering:
                         if cd[1] == self.dtc.calcLower:
-                            value = unicode(value).lower().strip()
+                            value = str(value).lower().strip()
 
                         elif cd[1] == self.dtc.calcUpper:
-                            value = unicode(value).upper().strip()
+                            value = str(value).upper().strip()
 
                         elif cd[1] == self.dtc.calcCapitalize:
-                            value = unicode(value).capitalize().strip()
+                            value = str(value).capitalize().strip()
 
                     elif cd[0] == self.dtc.calcAsciiReplace:
                         value = value.lower()
@@ -2898,11 +2898,11 @@ class DATAtree():
 
                     elif cd[0] == self.dtc.calcLstrip:
                         if value.strip().lower()[:len(cd[1])] == cd[1].lower():
-                            value = unicode(value[len(cd[1]):]).strip()
+                            value = str(value[len(cd[1]):]).strip()
 
                     elif cd[0] == self.dtc.calcRstrip:
                         if value.strip().lower()[-len(cd[1]):] == cd[1].lower():
-                            value = unicode(value[:-len(cd[1])]).strip()
+                            value = str(value[:-len(cd[1])]).strip()
 
                     elif cd[0] == self.dtc.calcSub:
                         for sset in cd[1]:
@@ -2944,7 +2944,7 @@ class DATAtree():
                         calc_warning('divider')
 
                 elif cd[0] == self.dtc.calcReplace:
-                    if isinstance(value, (str, unicode)):
+                    if isinstance(value, str):
                         v = value.strip().lower()
 
                     else:
@@ -3052,20 +3052,20 @@ class DATAtree():
                 value = datetime.date.fromtimestamp(float(value/type_def[1]))
 
             elif type_def[0] == self.dtc.typeRelativeWeekday:
-                if value.strip().lower() in self.relative_weekdays.keys():
+                if value.strip().lower() in list(self.relative_weekdays.keys()):
                     value = self.relative_weekdays[value.strip().lower()]
 
             elif type_def[0] == self.dtc.typeString:
-                value = unicode(value)
+                value = str(value)
 
             elif type_def[0] == self.dtc.typeLower:
-                value = unicode(value).lower()
+                value = str(value).lower()
 
             elif type_def[0] == self.dtc.typeUpper:
-                value = unicode(value).upper()
+                value = str(value).upper()
 
             elif type_def[0] == self.dtc.typeCapitalize:
-                value = unicode(value).capitalize()
+                value = str(value).capitalize()
 
             elif type_def[0] == self.dtc.typeInteger:
                 try:
@@ -3088,13 +3088,13 @@ class DATAtree():
                     if isinstance(value, (int, float)):
                         value = bool(value>0)
 
-                    elif isinstance(value, (str, unicode)):
+                    elif isinstance(value, str):
                         value = bool(len(value) > 0 and value != '0')
 
                     else:
                         value = False
 
-            elif type_def[0] == self.dtc.typeLowerAscii and isinstance(value, (str, unicode)):
+            elif type_def[0] == self.dtc.typeLowerAscii and isinstance(value, str):
                 value = value.lower()
                 value =re.sub('[ /]', '_', value)
                 value =re.sub('[!(),]', '', value)
@@ -3160,10 +3160,10 @@ class DATAtree():
                 # character reference
                 try:
                     if text[:3] == "&#x":
-                        return unichr(int(text[3:-1], 16))
+                        return chr(int(text[3:-1], 16))
 
                     else:
-                        return unichr(int(text[2:-1]))
+                        return chr(int(text[2:-1]))
 
                 except ValueError:
                     pass
@@ -3171,23 +3171,23 @@ class DATAtree():
             else:
                 # named entity
                 try:
-                    text = unichr(name2codepoint[text[1:-1]])
+                    text = chr(name2codepoint[text[1:-1]])
 
                 except KeyError:
                     pass
 
             return text # leave as is
 
-        if not isinstance(text,(str, unicode)):
+        if not isinstance(text,str):
             return text
 
-        return unicode(re.sub("&#?\w+;", fixup, text))
+        return str(re.sub("&#?\w+;", fixup, text))
     def print_text(self, text):
         if self.fle in (sys.stdout, sys.stderr):
             self.fle.write(text.encode('utf-8', 'replace'))
 
         else:
-            self.fle.write(u'%s\n' % (text, ))
+            self.fle.write('%s\n' % (text, ))
 
     def simplefilter(self, action, category=Warning, lineno=0, append=0, severity=0):
         with self.tree_lock:
@@ -3216,15 +3216,15 @@ class HTMLtree(HTMLParser, DATAtree):
             self.root = HTMLnode(self, 'root')
             self.current_node = self.root
             self.last_node = None
-            self.text = u''
+            self.text = ''
             self.open_tags = {}
             self.count_tags(data)
             # read the html page into the tree
             try:
                 # Cover for incomplete reads where the essentiel body part is retrieved
                 for ctag in ('body', 'BODY', 'html', 'HTML', 'xml', 'XML'):
-                    if u'<%s>' % (ctag, ) in data and not u'</%s>' % (ctag, ) in data:
-                        data = u'%s</%s>' % (data, ctag)
+                    if '<%s>' % (ctag, ) in data and not '</%s>' % (ctag, ) in data:
+                        data = '%s</%s>' % (data, ctag)
 
                 self.feed(data)
                 self.reset()
@@ -3271,7 +3271,7 @@ class HTMLtree(HTMLParser, DATAtree):
             if ',' in tag or '"' in tag or "'" in tag:
                 continue
 
-            if not tag in self.tag_count.keys():
+            if not tag in list(self.tag_count.keys()):
                 self.tag_count[tag] ={}
                 self.tag_count[tag]['close'] = 0
                 self.tag_count[tag]['comment'] = 0
@@ -3282,26 +3282,26 @@ class HTMLtree(HTMLParser, DATAtree):
 
             self.tag_count[tag][sub] += 1
 
-        for t, c in self.tag_count.items():
+        for t, c in list(self.tag_count.items()):
             if c['close'] == 0 and (c['start'] >0 or c['auto'] > 0) and not t in self.autoclose_tags:
                 self.autoclose_tags.append(t)
 
             if self.print_tags:
-                self.print_text(u'%5.0f %5.0f %5.0f %s' % (c['start'], c['close'], c['auto'], t))
+                self.print_text('%5.0f %5.0f %5.0f %s' % (c['start'], c['close'], c['auto'], t))
 
     def handle_starttag(self, tag, attrs):
-        if not tag in self.open_tags.keys():
+        if not tag in list(self.open_tags.keys()):
             self.open_tags[tag] = 0
 
         self.open_tags[tag] += 1
         if self.print_tags:
             if len(attrs) > 0:
-                self.print_text(u'%sstarting %s %s %s' % (self.current_node.get_leveltabs(2), self.current_node.level+1, tag, attrs[0]))
+                self.print_text('%sstarting %s %s %s' % (self.current_node.get_leveltabs(2), self.current_node.level+1, tag, attrs[0]))
                 for a in range(1, len(attrs)):
-                    self.print_text(u'%s        %s' % (self.current_node.get_leveltabs(2), attrs[a]))
+                    self.print_text('%s        %s' % (self.current_node.get_leveltabs(2), attrs[a]))
 
             else:
-                self.print_text(u'%sstarting %s %s' % (self.current_node.get_leveltabs(2), self.current_node.level,tag))
+                self.print_text('%sstarting %s %s' % (self.current_node.get_leveltabs(2), self.current_node.level,tag))
 
         node = HTMLnode(self, [tag.lower(), attrs], self.current_node)
         self.add_text()
@@ -3314,7 +3314,7 @@ class HTMLtree(HTMLParser, DATAtree):
         return True
 
     def handle_endtag(self, tag):
-        if not tag in self.open_tags.keys() or self.open_tags[tag] == 0:
+        if not tag in list(self.open_tags.keys()) or self.open_tags[tag] == 0:
             return
 
         self.open_tags[tag] -= 1
@@ -3325,8 +3325,8 @@ class HTMLtree(HTMLParser, DATAtree):
         self.add_text()
         if self.print_tags:
             if self.current_node.text.strip() != '':
-                self.print_text(u'%s        %s' % (self.current_node.get_leveltabs(2, -1), self.current_node.text.strip()))
-            self.print_text(u'%sclosing %s %s %s' % (self.current_node.get_leveltabs(2, -1), self.current_node.level,tag, self.current_node.tag))
+                self.print_text('%s        %s' % (self.current_node.get_leveltabs(2, -1), self.current_node.text.strip()))
+            self.print_text('%sclosing %s %s %s' % (self.current_node.get_leveltabs(2, -1), self.current_node.level,tag, self.current_node.tag))
 
         self.last_node = self.current_node
         self.is_tail = True
@@ -3347,7 +3347,7 @@ class HTMLtree(HTMLParser, DATAtree):
 
     def handle_entityref(self, name):
         try:
-            c = unichr(name2codepoint[name])
+            c = chr(name2codepoint[name])
             self.text += c
 
         except:
@@ -3355,10 +3355,10 @@ class HTMLtree(HTMLParser, DATAtree):
 
     def handle_charref(self, name):
         if name.startswith('x'):
-            c = unichr(int(name[1:], 16))
+            c = chr(int(name[1:], 16))
 
         else:
-            c = unichr(int(name))
+            c = chr(int(name))
 
         self.text += c
 
@@ -3376,21 +3376,21 @@ class HTMLtree(HTMLParser, DATAtree):
 
     def add_text(self):
         if self.is_tail:
-            self.last_node.tail += unicode(re.sub('\n','', re.sub('\r','', self.text)).strip())
+            self.last_node.tail += str(re.sub('\n','', re.sub('\r','', self.text)).strip())
 
         else:
-            self.current_node.text += unicode(re.sub('\n','', re.sub('\r','', self.text)).strip())
+            self.current_node.text += str(re.sub('\n','', re.sub('\r','', self.text)).strip())
 
-        self.text = u''
+        self.text = ''
 
     def remove_text(self):
         if self.is_tail:
             self.text += self.current_node.tail
-            self.current_node.tail = u''
+            self.current_node.tail = ''
 
         else:
             self.text += self.current_node.text
-            self.current_node.text = u''
+            self.current_node.text = ''
 
 # end HTMLtree
 
@@ -3525,7 +3525,7 @@ class DataTreeShell():
         # "url-date-format", "url-date-multiplier", "url-weekdays"
         # 'url-var', 'count', 'cnt-offset', 'offset'
         def get_url_part(u_part):
-            if isinstance(u_part, (str, unicode)):
+            if isinstance(u_part, str):
                 return u_part
 
             # get a variable
@@ -3533,7 +3533,7 @@ class DataTreeShell():
 
         with self.tree_lock:
             self.url_data = url_data
-            url = u''
+            url = ''
             for u_part in self.data_def["url"]:
                 uval = get_url_part(u_part)
                 if uval == None:
@@ -3541,11 +3541,11 @@ class DataTreeShell():
                     return None
 
                 else:
-                    url += unicode(uval)
+                    url += str(uval)
 
             encoding = self.data_def["encoding"]
             if only_acceptstring:
-                if "Accept" in self.data_def["url-header"].keys():
+                if "Accept" in list(self.data_def["url-header"].keys()):
                     accept_header = self.data_def["url-header"]["Accept"]
 
                 else:
@@ -3553,7 +3553,7 @@ class DataTreeShell():
 
             else:
                 accept_header = {}
-                for k, u_part in self.data_def["url-header"].items():
+                for k, u_part in list(self.data_def["url-header"].items()):
                     uval = get_url_part(u_part)
                     if uval == None:
                         self.warn('Invalid url-header definition: %s' % (u_part, ), dtUrlWarning, 1)
@@ -3563,7 +3563,7 @@ class DataTreeShell():
                         accept_header[k] = uval
 
             url_data = {}
-            for k, u_part in self.data_def["url-data"].items():
+            for k, u_part in list(self.data_def["url-data"].items()):
                 uval = get_url_part(u_part)
                 if uval == None:
                     self.warn('Invalid url-data definition: %s' % (u_part, ), dtUrlWarning, 1)
@@ -3594,10 +3594,10 @@ class DataTreeShell():
         def get_weekday(dtordinal):
             wd = datetime.date.fromordinal(dtordinal).weekday()
             if len(uwd) == 7:
-                return unicode(uwd[wd])
+                return str(uwd[wd])
 
             url_warning('Invalid "url-weekdays"')
-            return unicode(wd)
+            return str(wd)
 
         try:
             if urlid > 99:
@@ -3627,14 +3627,14 @@ class DataTreeShell():
                 elif is_data_value(dkey, self.url_data, list):
                     cc = ''
                     for c in self.url_data[dkey]:
-                        cc = u'%s,%s'% (cc, c)
+                        cc = '%s,%s'% (cc, c)
 
                     return cc[1:]
 
                 elif is_data_value(dkey, self.url_data, dict):
                     cc = ''
-                    for c in self.url_data[dkey].values():
-                        cc = u'%s,%s'% (cc, c)
+                    for c in list(self.url_data[dkey].values()):
+                        cc = '%s,%s'% (cc, c)
 
                     return cc[1:]
 
@@ -3647,7 +3647,7 @@ class DataTreeShell():
                 cnt_offset = data_value('cnt-offset', self.url_data, int, default=0)
                 cstep = cnt_offset * cnt
                 splitter = self.data_def["item-range-splitter"]
-                return u'%s%s%s' % (cstep + 1, splitter, cstep  + cnt)
+                return '%s%s%s' % (cstep + 1, splitter, cstep  + cnt)
 
             elif urlid == 11:
                 if is_data_value(0, data, str):
@@ -3662,14 +3662,14 @@ class DataTreeShell():
                         return get_dtstring(self.current_ordinal + offset)
 
                     else:
-                        return unicode(offset)
+                        return str(offset)
 
                 elif udt == 1:
                     return get_timestamp(self.current_ordinal + offset)
 
                 elif udt == 2:
-                    if offset in rwd.keys():
-                        return unicode(rwd[offset])
+                    if offset in list(rwd.keys()):
+                        return str(rwd[offset])
 
                     return get_weekday(self.current_ordinal + offset)
 
@@ -3697,21 +3697,21 @@ class DataTreeShell():
                         end = get_dtstring(self.current_ordinal + end)
 
                     else:
-                        start = unicode(start)
-                        end = unicode(end)
+                        start = str(start)
+                        end = str(end)
 
                 elif udt == 1:
                     start = get_timestamp(self.current_ordinal + start)
                     end = get_timestamp(self.current_ordinal + end)
 
                 elif udt == 2:
-                    if start in rwd.keys():
-                        start = unicode(rwd[start])
+                    if start in list(rwd.keys()):
+                        start = str(rwd[start])
                     else:
                         start = get_weekday(self.current_ordinal + start)
 
-                    if end in rwd.keys():
-                        end = unicode(rwd[end])
+                    if end in list(rwd.keys()):
+                        end = str(rwd[end])
                     else:
                         end = get_weekday(self.current_ordinal + end)
 
@@ -3782,7 +3782,7 @@ class DataTreeShell():
             if isinstance(data, (dict, list)):
                 dttype = 'json'
 
-            elif isinstance(data, (str, unicode)) and data.strip()[0] in ("{", "["):
+            elif isinstance(data, str) and data.strip()[0] in ("{", "["):
                 try:
                     data = json.loads(data)
                     dttype = 'json'
@@ -3793,7 +3793,7 @@ class DataTreeShell():
                         % (type(data), ), dtDataWarning, 1)
                     return self.check_errorcode()
 
-            elif isinstance(data, (str, unicode)) and data.strip()[0] == "<":
+            elif isinstance(data, str) and data.strip()[0] == "<":
                 dttype = 'html'
 
             else:
@@ -3810,11 +3810,11 @@ class DataTreeShell():
                 autoclose_tags = self.data_def["autoclose-tags"]
                 # Cover for incomplete reads where the essentiel body part is retrieved
                 for ctag in ('body', 'BODY', 'html', 'HTML', 'xml', 'XML'):
-                    if u'<%s>' % (ctag, ) in data and not u'</%s>' % (ctag, ) in data:
-                        data = u'%s</%s>' % (data, ctag)
+                    if '<%s>' % (ctag, ) in data and not '</%s>' % (ctag, ) in data:
+                        data = '%s</%s>' % (data, ctag)
 
                 if self.data_def["enclose-with-html-tag"]:
-                    data = u'<html>%s</html>' % (data, )
+                    data = '<html>%s</html>' % (data, )
 
                 for subset in self.data_def["text_replace"]:
                     if isinstance(subset, list) and len(subset) >= 2:
@@ -3826,7 +3826,7 @@ class DataTreeShell():
                             self.warn('An error occured applying "text_replace" regex: "%s"' % (subset, ), dtDataWarning, 2)
 
                 for ut in self.data_def["unquote_html"]:
-                    if isinstance(ut, (str, unicode)):
+                    if isinstance(ut, str):
                         try:
                             data = re.sub(ut, unquote, data, 0, re.DOTALL)
 
@@ -3921,7 +3921,7 @@ class DataTreeShell():
                 return
 
             # remove any leading or trailing spaces on a string/unicode value
-            value = linkdata[varid] if (not  isinstance(linkdata[varid], (unicode, str))) else unicode(linkdata[varid]).strip()
+            value = linkdata[varid] if (not  isinstance(linkdata[varid], str)) else str(linkdata[varid]).strip()
             return process_extras(value, vdef, key)
 
         def process_link_function(vdef, key):
@@ -3949,7 +3949,7 @@ class DataTreeShell():
 
         def process_extras(value, vdef, key):
             if not value in self.empty_values:
-                if vdef[0] & self.dtc.linkhasRegex and isinstance(value, (str, unicode)):
+                if vdef[0] & self.dtc.linkhasRegex and isinstance(value, str):
                     search_regex = vdef[self.dtc.linkPos[self.dtc.linkhasRegex]]
                     try:
                         dd = re.search(search_regex, value, re.DOTALL)
@@ -3970,16 +3970,16 @@ class DataTreeShell():
                     dtype = vdef[self.dtc.linkPos[self.dtc.linkhasType]]
                     try:
                         if dtype == self.dtc.typeString:
-                            value = unicode(value)
+                            value = str(value)
 
                         elif dtype == self.dtc.typeLower:
-                            value = unicode(value).lower()
+                            value = str(value).lower()
 
                         elif dtype == self.dtc.typeUpper:
-                            value = unicode(value).upper()
+                            value = str(value).upper()
 
                         elif dtype == self.dtc.typeCapitalize:
-                            value = unicode(value).capitalize()
+                            value = str(value).capitalize()
 
                         elif dtype == self.dtc.typeInteger:
                             value = int(value)
@@ -4025,7 +4025,7 @@ class DataTreeShell():
                                     (cv[1], value), dtLinkWarning, 4)
 
                 if vdef[0] & self.dtc.linkhasMax:
-                    if isinstance(value, (str, unicode, list, dict)) and len(value) > vdef[self.dtc.linkPos[self.dtc.linkhasMax]]:
+                    if isinstance(value, (str, list, dict)) and len(value) > vdef[self.dtc.linkPos[self.dtc.linkhasMax]]:
                         self.warn('Requested datavalue "%s" is longer then %s'% \
                             (key, vdef[self.dtc.linkPos[self.dtc.linkhasMax]]), dtLinkWarning, 4)
                         value = None
@@ -4036,7 +4036,7 @@ class DataTreeShell():
                         value = None
 
                 if vdef[0] & self.dtc.linkhasMin:
-                    if isinstance(value, (str, unicode, list, dict)) and len(value) < vdef[self.dtc.linkPos[self.dtc.linkhasMin]]:
+                    if isinstance(value, (str, list, dict)) and len(value) < vdef[self.dtc.linkPos[self.dtc.linkhasMin]]:
                         self.warn('Requested datavalue "%s" is shorter then %s'% \
                             (key, vdef[self.dtc.linkPos[self.dtc.linkhasMin]]), dtLinkWarning, 4)
                         value = None
@@ -4053,7 +4053,7 @@ class DataTreeShell():
 
         values = {}
         if isinstance(linkdata, list):
-            for k, v in self.data_def["values"].items():
+            for k, v in list(self.data_def["values"].items()):
                 lact = v[0] & self.dtc.linkGroup
                 cval = None
                 if lact == self.dtc.linkVarID:
@@ -4100,13 +4100,13 @@ class DataTreeShell():
                     if default != None:
                         return default
 
-                    return u''
+                    return ''
 
                 if is_data_value(1, data, str) and data[0].strip().lower()[-len(data[1]):] == data[1].lower():
-                    return unicode(data[0][:-len(data[1])]).strip()
+                    return str(data[0][:-len(data[1])]).strip()
 
                 else:
-                    return unicode(data[0]).strip()
+                    return str(data[0]).strip()
 
             # strip data[1] from the start of data[0] if present and make sure it's unicode
             elif fid == 1:
@@ -4115,21 +4115,21 @@ class DataTreeShell():
                     if default != None:
                         return default
 
-                    return u''
+                    return ''
 
                 if is_data_value(1, data, str) and data[0].strip().lower()[:len(data[1])] == data[1].lower():
-                    return unicode(data[0][len(data[1]):]).strip()
+                    return str(data[0][len(data[1]):]).strip()
 
                 else:
-                    return unicode(data[0]).strip()
+                    return str(data[0]).strip()
 
             # concatenate stringparts and make sure it's unicode
             elif fid == 2:
-                dd = u''
+                dd = ''
                 for d in data:
                     if d != None:
                         try:
-                            dd += unicode(d)
+                            dd += str(d)
 
                         except:
                             link_warning('Invalid data value')
@@ -4150,10 +4150,10 @@ class DataTreeShell():
                             link_warning('Missing or invalid data value 1')
 
                     elif is_data_value(1, data, list):
-                        rval = u''
+                        rval = ''
                         for dpart in data[1]:
                             if isinstance(dpart, int) and dpart < len(dd):
-                                rval = u'%s/%s' % (rval, dpart)
+                                rval = '%s/%s' % (rval, dpart)
 
                             else:
                                 link_warning('Missing or invalid data value in list 1')
@@ -4168,7 +4168,7 @@ class DataTreeShell():
                     link_warning('Missing or invalid data value 0')
 
                 if default == None:
-                    return u''
+                    return ''
 
                 else:
                     return default
@@ -4235,7 +4235,7 @@ class DataTreeShell():
 
             # Return the longest not empty text value
             elif fid == 8:
-                text = default if isinstance(default, (str, unicode)) else u''
+                text = default if isinstance(default, str) else ''
                 if len(data) == 0:
                     link_warning('Missing data values')
                     return text
@@ -4243,7 +4243,7 @@ class DataTreeShell():
                 for item in range(len(data)):
                     if is_data_value(item, data, str):
                         if len(data[item]) > len(text):
-                            text = unicode(data[item].strip())
+                            text = str(data[item].strip())
 
                 return text
 
@@ -4254,8 +4254,8 @@ class DataTreeShell():
                     return default
 
                 for item in data:
-                    if (isinstance(item, (str, unicode, list, tuple, dict)) and len(item) > 0) or \
-                      (not isinstance(item, (str, unicode, list, tuple, dict)) and item != None):
+                    if (isinstance(item, (str, list, tuple, dict)) and len(item) > 0) or \
+                      (not isinstance(item, (str, list, tuple, dict)) and item != None):
                         return item
 
             # look for item 2 in list 0 and return the corresponding value in list1, If not found return item 3 (or None)
@@ -4268,13 +4268,13 @@ class DataTreeShell():
                     data[0] = [data[0]]
 
                 for index in range(len(data[0])):
-                    if isinstance(data[0][index], (str, unicode)):
+                    if isinstance(data[0][index], str):
                         data[0][index] = data[0][index].lower().strip()
 
                 if not isinstance(data[1], (list,tuple)):
                     data[1] = [data[1]]
 
-                sd = data[2].lower().strip() if isinstance(data[2], (str, unicode)) else data[2]
+                sd = data[2].lower().strip() if isinstance(data[2], str) else data[2]
 
                 if sd in data[0]:
                     index = data[0].index(sd)
@@ -4301,12 +4301,12 @@ class DataTreeShell():
 
                 if is_data_value(0, data, list):
                     for item in data[1]:
-                        if isinstance(item, (str,unicode)):
+                        if isinstance(item, str):
                             item = item.lower()
 
                         for sitem in data[0]:
                             if isinstance(sitem, dict):
-                                if item in sitem.keys():
+                                if item in list(sitem.keys()):
                                     if isinstance(sitem[item], (list, tuple)) and len(sitem[item]) == 0:
                                         continue
 
@@ -4325,13 +4325,13 @@ class DataTreeShell():
                     if default != None:
                         return default
 
-                    return u''
+                    return ''
 
                 if is_data_value(1, data, str) and data[1] in data[0]:
                     re.sub('  ', ' ', re.sub(data[1], '', data[0]))
 
                 else:
-                    return unicode(data[0]).strip()
+                    return str(data[0]).strip()
 
             else:
                 link_warning('Unknown link function',2)

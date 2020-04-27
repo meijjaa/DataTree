@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 '''
 This Package contains a tool for extracting structured data from HTML and JSON
